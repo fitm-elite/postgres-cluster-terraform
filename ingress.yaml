@@ -1,0 +1,103 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-${cluster_name}-nodeport
+  namespace: ${namespace}
+  labels:
+    app: postgres-${cluster_name}
+    service-type: nodeport
+spec:
+  type: NodePort
+  ports:
+  - name: pgbouncer
+    port: 5432
+    targetPort: 5432
+    nodePort: ${pgbouncer_nodeport}
+    protocol: TCP
+  - name: postgresql-direct
+    port: 5433
+    targetPort: 5432
+    nodePort: ${postgresql_direct_nodeport}
+    protocol: TCP
+  selector:
+    app.kubernetes.io/name: pgbouncer
+    app.kubernetes.io/instance: pgbouncer-${cluster_name}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-${cluster_name}-postgresql-nodeport
+  namespace: ${namespace}
+  labels:
+    app: postgres-${cluster_name}-postgresql
+    service-type: nodeport
+spec:
+  type: NodePort
+  ports:
+  - name: postgresql
+    port: 5432
+    targetPort: 5432
+    nodePort: ${postgresql_nodeport}
+    protocol: TCP
+  selector:
+    cnpg.io/cluster: postgresql-${cluster_name}
+    role: primary
+---
+# ConfigMap for connection examples
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-${cluster_name}-connection-info
+  namespace: ${namespace}
+data:
+  connection-examples.txt: |
+    PostgreSQL ${cluster_name} Connection Information
+    ===============================================
+
+    Internal Kubernetes Access:
+    ---------------------------
+
+    Via PgBouncer (Recommended):
+    Host: pgbouncer-${cluster_name}.${namespace}.svc.cluster.local
+    Port: 5432
+    Database: ${database_name}
+    Username: postgres
+
+    Direct PostgreSQL:
+    Host: postgresql-${cluster_name}.${namespace}.svc.cluster.local
+    Port: 5432
+    Database: ${database_name}
+    Username: postgres
+
+    External Access:
+    ----------------
+
+    Via NodePort:
+    PgBouncer: ${server_ip}:${pgbouncer_nodeport}
+    PostgreSQL Direct: ${server_ip}:${postgresql_nodeport}
+    PgBouncer Alt Port: ${server_ip}:${postgresql_direct_nodeport}
+
+    Connection String Examples:
+    ---------------------------
+
+    PgBouncer (via NodePort):
+    postgresql://postgres:password@${server_ip}:${pgbouncer_nodeport}/${database_name}
+
+    PostgreSQL Direct (via NodePort):
+    postgresql://postgres:password@${server_ip}:${postgresql_nodeport}/${database_name}
+
+    psql Commands:
+    --------------
+
+    Via PgBouncer:
+    psql -h ${server_ip} -p ${pgbouncer_nodeport} -U postgres -d ${database_name}
+
+    Direct PostgreSQL:
+    psql -h ${server_ip} -p ${postgresql_nodeport} -U postgres -d ${database_name}
+
+    Security Notes:
+    ---------------
+    - Change default passwords in production
+    - Use SSL/TLS for external connections
+    - Configure firewall rules appropriately
+    - Consider using connection pooling via PgBouncer for better performance

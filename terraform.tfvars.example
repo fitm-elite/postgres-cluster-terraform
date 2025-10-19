@@ -1,0 +1,66 @@
+# GitHub configuration for accessing private repositories and container registries
+github = {
+    username = "fitm-elite"
+    token = "ghp_your_github_personal_access_token_here"
+}
+
+# Server configuration for SSH access
+server = {
+    ssh_server = "192.168.1.100"
+    ssh_port = 22
+    ssh_username = "ubuntu"
+    ssh_password = ""
+    ssh_private_key_path = "~/.ssh/id_rsa"
+}
+
+# PostgreSQL cluster configuration
+postgres = {
+    username = "postgres"
+    password = "change_this_secure_password"
+    replication_username = "replicator"
+    replication_password = "replicator_secure_password"
+}
+
+# PgBouncer connection pooler configuration
+pgbouncer = {
+    pool_mode = "transaction"
+    max_client_conn = 100
+    default_pool_size = 25
+    admin_users = "postgres"
+    stats_users = "postgres"
+}
+
+# Storage configuration
+storage = {
+    size = "20Gi"
+    storage_class = "local-path"
+}
+
+# Resource limits for PostgreSQL and PgBouncer containers
+resources = {
+    postgresql = {
+        requests_memory = "256Mi"
+        requests_cpu = "250m"
+        limits_memory = "1Gi"
+        limits_cpu = "1000m"
+    }
+
+    pgbouncer = {
+        requests_memory = "64Mi"
+        requests_cpu = "100m"
+        limits_memory = "256Mi"
+        limits_cpu = "500m"
+    }
+}
+
+# High availability configuration
+high_availability = {
+    enabled = true
+    replica_count = 2
+    synchronous_replication = false
+}
+
+# Data preservation settings (IMPORTANT for terraform destroy)
+# Set to false to permanently delete data when running terraform destroy
+preserve_postgres_data_on_destroy = true
+preserve_postgres_pvcs = true

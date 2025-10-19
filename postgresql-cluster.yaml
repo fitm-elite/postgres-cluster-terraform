@@ -1,0 +1,74 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: postgresql-${cluster_name}
+  namespace: ${namespace}
+spec:
+  instances: ${instances}
+  
+  postgresql:
+    parameters:
+      password_encryption: "scram-sha-256"
+      max_connections: "200"
+      shared_buffers: "256MB"
+      effective_cache_size: "1GB"
+      maintenance_work_mem: "64MB"
+      checkpoint_completion_target: "0.9"
+      wal_buffers: "16MB"
+      default_statistics_target: "100"
+      random_page_cost: "1.1"
+      effective_io_concurrency: "200"
+      work_mem: "4MB"
+      min_wal_size: "2GB"
+      max_wal_size: "4GB"
+      max_worker_processes: "8"
+      max_parallel_workers_per_gather: "4"
+      max_parallel_workers: "8"
+      max_parallel_maintenance_workers: "4"
+      max_wal_senders: "10"
+      max_replication_slots: "10"
+      logging_collector: "on"
+      log_statement: "mod"
+      log_min_duration_statement: "1000"
+      log_line_prefix: "%t [%p]: [%l-1] user=%u,db=%d,app=%a,client=%h "
+      log_checkpoints: "on"
+      log_connections: "on"
+      log_disconnections: "on"
+      log_lock_waits: "on"
+      log_temp_files: "0"
+
+  bootstrap:
+    initdb:
+      database: ${database_name}
+
+  superuserSecret:
+    name: postgresql-${cluster_name}-superuser
+
+  storage:
+    size: ${storage_size}
+    storageClass: ${storage_class}
+
+  resources:
+    requests:
+      memory: ${postgresql_requests_memory}
+      cpu: ${postgresql_requests_cpu}
+    limits:
+      memory: ${postgresql_limits_memory}
+      cpu: ${postgresql_limits_cpu}
+
+  monitoring:
+    disableDefaultQueries: false
+
+  backup:
+    retentionPolicy: "30d"
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgresql-${cluster_name}-superuser
+  namespace: ${namespace}
+type: kubernetes.io/basic-auth
+stringData:
+  username: ${postgres_username}
+  password: ${postgres_password}
