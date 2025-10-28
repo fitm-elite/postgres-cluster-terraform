@@ -5,7 +5,7 @@ metadata:
   namespace: ${namespace}
 spec:
   instances: ${instances}
-  
+
   postgresql:
     parameters:
       password_encryption: "scram-sha-256"
@@ -36,10 +36,23 @@ spec:
       log_disconnections: "on"
       log_lock_waits: "on"
       log_temp_files: "0"
+      tcp_keepalives_idle: "60"
+      tcp_keepalives_interval: "10"
+      tcp_keepalives_count: "6"
+      idle_in_transaction_session_timeout: "0"
+      statement_timeout: "0"
+
+    pg_hba:
+      - host all all 0.0.0.0/0 scram-sha-256
+      - host all all ::0/0 scram-sha-256
+      - local all all scram-sha-256
 
   bootstrap:
     initdb:
       database: ${database_name}
+      postInitSQL:
+        - ALTER USER ${postgres_username} WITH SUPERUSER CREATEDB CREATEROLE REPLICATION BYPASSRLS;
+        - ALTER USER ${postgres_username} VALID UNTIL 'infinity';
 
   superuserSecret:
     name: postgresql-${cluster_name}-superuser
